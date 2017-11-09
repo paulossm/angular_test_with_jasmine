@@ -4,25 +4,6 @@
 
 var app = angular.module('provasOnline', []);
 
-app.controller('listaCtrl', function($scope, $http) {
-
-    $scope.matricula = document.getElementsByName("matricula")[0].value;
-    $scope.requestUrl = document.getElementsByName("requestUrl")[0].value;
-
-    $scope.logout = function () {
-        var url = document.getElementsByName("logoutUrl")[0].value;
-        $.ajax({
-            type: "GET",
-            url: url,
-            success: function(data) {},
-        });
-    };
-
-    if(localStorage.length > 0) {
-        localStorage.clear();
-    }
-});
-
 app.controller('provaCtrl', function($scope, $http, $interval, $timeout) {
     var exam = "";
 
