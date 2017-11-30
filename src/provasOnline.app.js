@@ -9,7 +9,174 @@ app.controller('provaCtrl', function($scope, $http, $interval, $timeout) {
 
     location.hash = "takingExam";
 
-    
+    $(window).on('hashchange', function () {
+        location.hash = "takingExam";
+    });
+
+    $scope.requestUrl = "http://" + window.location.host + document.getElementsByName("requestUrl")[0].value;
+    $scope.idEvento = document.getElementsByName("idEvento")[0].value;
+    $scope.matricula = document.getElementsByName("matricula")[0].value;
+
+    $scope.configExam = function (data) {
+
+        $scope.exam = data['previews'];
+        $scope.idProva = data['idProva']['idProvaInstanciada'];
+
+        if (data["current-question"]) {
+            $scope.currentQuestion = parseInt(data["current-question"]);
+        } else {
+            $scope.currentQuestion = 0;
+            data['current-question'] = 0;
+            localStorage.setItem("exam-" + $scope.idEvento, JSON.stringify(data));
+        }
+
+        $scope.totalQuestions = $scope.exam.length;
+        $scope.answer = {selectedOption: 'N/R'};
+        if (data["answers"]) {
+            $scope.answers = data["answers"];
+        } else {
+            $scope.answers = new Array($scope.exam.length);
+            /* fill answer sheet */
+            for (var i = 0; i < $scope.answers.length; i++) {
+                $scope.answers[i] = {
+                    "question": i + 1,
+                    "answer": 'N/R'
+                }
+            }
+            data['answers'] = $scope.answers;
+            localStorage.setItem("exam-" + $scope.idEvento, JSON.stringify(data));
+        }
+        $scope.letter = String.fromCharCode(97);
+    };
+
+    $scope.configClock = function () {
+
+        $scope.timeIsOver = false;
+
+        if(exam["start-time"]) {
+            var now = new Date(exam["start-time"]);
+        } else {
+            now = new Date();
+            exam['start-time'] = now.toISOString();
+            localStorage.setItem("exam-" + $scope.idEvento, JSON.stringify(exam));
+        }
+
+        /* TEMPO DE PROVA DEFINIDO PELO PROFESSOR */
+        if(exam["duration"]) {
+            $scope.exam.duration = exam['duration'];
+        } else {
+            $scope.exam.duration = document.getElementById("examDuration").value;
+            exam['duration'] = $scope.exam.duration;
+            localStorage.setItem("exam-" + $scope.idEvento, JSON.stringify(exam));
+        }
+
+        var final = new Date(now);
+        var examTime = $scope.exam.duration.split(":");
+        var hours = examTime[0];
+        var minutes = examTime[1];
+        var seconds = examTime[2];
+
+        final.addHours(hours);
+        final.addMinutes(minutes);
+        final.addSeconds(seconds);
+
+        $scope.examTime = {
+            'startTime': now,
+            'endTime': final
+        };
+
+        if(exam["time-left"]) {
+            $scope.time = exam['time-left'];
+        } else {
+            $scope.time = {
+                'hours': {
+                    'left': ''
+                },
+                'minutes': {
+                    'left': ''
+                },
+                'seconds': {
+                    'left': ''
+                }
+            };
+
+            var totalTime = ($scope.examTime.endTime - $scope.examTime.startTime);
+            var totalInSeconds = Math.round(totalTime / 1000);
+
+            $scope.time.hours.left = Math.floor(totalInSeconds / 3600);
+            totalInSeconds -= ($scope.time.hours.left * 3600);
+            $scope.time.minutes.left = Math.floor(totalInSeconds / 60);
+            $scope.time.seconds.left = totalInSeconds - ($scope.time.minutes.left * 60);
+
+            exam['time-left'] = $scope.time;
+            localStorage.setItem("exam-" + $scope.idEvento, JSON.stringify(exam));
+        }
+    };
+
+    $scope.loadQuestion = function (questionNumber) {
+
+        // pausar temporizador de prova
+        if($scope.clockTicking)
+            $scope.clockTicking = $interval.cancel($scope.clockTicking);
+
+        // Carregar enunciado
+        $scope.enunciado = $scope.exam[questionNumber].enunciado;
+
+        // Carregar Alternativas
+        $scope.alternativas = $scope.exam[questionNumber].alternativas;
+
+        // Carregar Letras Instanciadas
+        $scope.letras = $scope.exam[questionNumber].letraInstanciada.split(",");
+
+        /*
+         Configurar Objeto resposta para a questão atual
+         Limpa a alternativa marcada.
+         */
+        $scope.answer.selectedOption = 'N/R';
+        if ($scope.answers[questionNumber] != undefined) {
+            if ($scope.answers[questionNumber].answer != '') {
+                $scope.answer.selectedOption = $scope.answers[questionNumber].answer;
+            }
+        } else {
+            $scope.answer.selectedOption = "N/R";
+        }
+
+        // retoma o temporizador de prova
+        $scope.clockTicking = $interval($scope.countDown, 1000);
+    };
+
+    $scope.saveAnswer = function () {
+        $scope.answers[$scope.currentQuestion] = {
+            "question": $scope.currentQuestion + 1,
+            "answer": $scope.answer.selectedOption
+        };
+        exam["answers"] = $scope.answers;
+        localStorage.setItem("exam-" + $scope.idEvento, JSON.stringify(exam));
+    };
+
+    $scope.previousQuestion = function () {
+        // Save answer for current question before loading the next one
+        // $scope.saveAnswer();
+        if ($scope.currentQuestion > 0) {
+            --$scope.currentQuestion;
+            exam['current-question'] = $scope.currentQuestion;
+            localStorage.setItem("exam-" + $scope.idEvento, JSON.stringify(exam));
+            $scope.loadQuestion($scope.currentQuestion);
+        }
+    };
+
+    $scope.nextQuestion = function () {
+        // Save answer for current question before loading the next one
+        // $scope.saveAnswer();
+        if ($scope.currentQuestion + 1 < $scope.exam.length) {
+            ++$scope.currentQuestion;
+            exam['current-question'] = $scope.currentQuestion;
+            localStorage.setItem("exam-" + $scope.idEvento, JSON.stringify(exam));
+            $scope.loadQuestion($scope.currentQuestion);
+        } else {
+            $scope.finishExam();
+        }
+    };
 
     $scope.navigate = function (questionNumber) {
         if (questionNumber >= $scope.exam.length || questionNumber < 0) {
@@ -18,7 +185,7 @@ app.controller('provaCtrl', function($scope, $http, $interval, $timeout) {
             $scope.currentQuestion = questionNumber;
             exam['current-question'] = $scope.currentQuestion;
             localStorage.setItem("exam-" + $scope.idEvento, JSON.stringify(exam));
-            //$scope.loadQuestion($scope.currentQuestion);
+            $scope.loadQuestion($scope.currentQuestion);
         }
     };
 
