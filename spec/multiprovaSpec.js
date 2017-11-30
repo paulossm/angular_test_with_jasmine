@@ -16,20 +16,21 @@ describe('MultiprovaTest', function() {
 
     // Suíte de testes
     describe("$scope.navigate", function() {
-		
+
         // Caso de teste
+        
 		it('should set the correct question to $scope', function() {
           
           var $scope = $rootScope.$new();
           var controller = $controller('provaCtrl', { $scope: $scope });
           
           $scope.exam = ['test'];
-          var question = 0;
+          var question = 1;
           $scope.navigate(question);
-          expect($scope.currentQuestion).toEqual(0);
+          expect($scope.currentQuestion).toEqual(1);
         });
-      
-      it('should set the correct question to $scope', function() {
+    /*
+        it('should set the correct question to $scope', function() {
           
           var $scope = $rootScope.$new();
           var controller = $controller('provaCtrl', { $scope: $scope });
@@ -39,6 +40,16 @@ describe('MultiprovaTest', function() {
           $scope.navigate(question);
           expect($scope.currentQuestion).toEqual(-1);
         });
+
+      
+      it('should verify if a question is answered', function(){
+        var $scope = $rootScope.$new();
+        var controller = $controller('provaCtrl', { $scope: $scope });
+
+        $scope.answeres = ["c"];
+        $scope.answeres.answer = true;
+      });
+      */
 		
     });
-})
+});
