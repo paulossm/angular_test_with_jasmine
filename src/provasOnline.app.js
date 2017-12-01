@@ -5,40 +5,44 @@
 var app = angular.module('provasOnline', []);
 
 app.controller('provaCtrl', function($scope, $http, $interval, $timeout) {
-    var exam = {};
+    var exam = "";
+
     
-    $scope.countDown = function () {
-        if ($scope.time.minutes.left == 0 && $scope.time.seconds.left == 0) {
-            if ($scope.time.hours.left > 0) {
-                $scope.time.hours.left--;
-                $scope.time.minutes.left = 59;
-                $scope.time.seconds.left = 59;
-                exam['time-left'] = $scope.time;
-                localStorage.setItem("exam-" + $scope.idEvento, JSON.stringify(exam));
-                return;
-            } else {
-                // tempo esgotado - finalizar prova
-                $scope.timeIsOver = true;
-                $scope.time.seconds.left = 0;
-                $scope.clockTicking = $interval.cancel($scope.clockTicking);
-                exam['time-left'] = $scope.time;
-                localStorage.setItem("exam-" + $scope.idEvento, JSON.stringify(exam))
-                $scope.confirmSubmit();
-                return;
-            }
-        }
-        if ($scope.time.seconds.left == 0) {
-            if ($scope.time.minutes.left > 0) {
-                $scope.time.minutes.left--;
-                $scope.time.seconds.left = 59;
-                exam['time-left'] = $scope.time;
-                localStorage.setItem("exam-" + $scope.idEvento, JSON.stringify(exam))
-            }
+
+    $scope.configExam = function (data) {
+        if(!data || !data.previews || !data.idProva) {
+            $("body").addClass("notLoaded");
             return;
         }
-        $scope.time.seconds.left--;
-        exam['time-left'] = $scope.time;
-        localStorage.setItem("exam-" + $scope.idEvento, JSON.stringify(exam))
+        
+        $scope.exam = data['previews'];
+        $scope.idProva = data['idProva']['idProvaInstanciada'];
+
+        if (data["current-question"]) {
+            $scope.currentQuestion = parseInt(data["current-question"]);
+        } else {
+            $scope.currentQuestion = 0;
+            data['current-question'] = 0;
+            localStorage.setItem("exam-" + $scope.idEvento, JSON.stringify(data));
+        }
+
+        $scope.totalQuestions = $scope.exam.length;
+        $scope.answer = {selectedOption: 'N/R'};
+        if (data["answers"]) {
+            $scope.answers = data["answers"];
+        } else {
+            $scope.answers = new Array($scope.exam.length);
+            /* fill answer sheet */
+            for (var i = 0; i < $scope.answers.length; i++) {
+                $scope.answers[i] = {
+                    "question": i + 1,
+                    "answer": 'N/R'
+                }
+            }
+            data['answers'] = $scope.answers;
+            localStorage.setItem("exam-" + $scope.idEvento, JSON.stringify(data));
+        }
+        $scope.letter = String.fromCharCode(97);
     };
-    
+
 });
