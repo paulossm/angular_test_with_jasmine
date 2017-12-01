@@ -18,22 +18,21 @@ describe('MultiprovaTest', function() {
     }));
 
     // Suite de Testes
-    describe("the $scope.configExam function", function() {
+    describe("the $scope.store_local_data function", function() {
         
         /*
-            Esta função é responsável por inicializar as variáveis com dados da prova
-            que está sendo feita. Ela recebe um objeto data que é resultado de uma requisição
-            da aplicação a um serviço externo, e então preenche as variáveis necessárias.
+            Responsável por verificar o suporte ao armazenamento local no navegador
+            e alocar os dados da prova após a requisição
             
             Requisitos:
                 Válidos:
-                    - data['previews'] e data['idProva']['idProvaInstanciada'] precisam estar definidos [1]
-                    - data["current-question"] pode ser indefinido ou um número entre 0 e (n-1) sendo 'n' o número de questões da prova atual[2]
-                    - data["answers"] pode ser indefinido ou representar um array de mesmo tamanho do número de questões da prova atual. [3]
+                    - data['idProva']['idProvaInstanciada'] precisa estar definido [1]
+                    - ao invocar document.getElementById("examDuration"), este deve ser um valor válido [2]
                     
                 Inválidos:
-                    - data está indefinido [4]
-                    - data não está no formato válido [5]
+                    - data está indefinido [3]
+                    - data não está no formato válido [4]
+                    - Storage está indefinido [5]
         */
         
         var $scope, controller;
@@ -59,60 +58,55 @@ describe('MultiprovaTest', function() {
             
             /* Mocks de funções que são chamadas durante a execução do caso de teste */
             localStorage.setItem = jasmine.createSpy("setItem");
+            document.getElementById = jasmine.createSpy("DOM").and.returnValue({value: "01:01:01"});
         });
         
         
         // Caso de teste que cobre classe (1)
-        it('should assign previews and idProva correctly', function() { 
-            this.data.previews = ['m','o','c','k'];
-            this.data.idProva.idProvaInstanciada = 1;
+        it('should store local data correctly', function() { 
+            this.data.mockFullData();
+            var Storage = {};
             
-            $scope.configExam(this.data);
-            
-            expect($scope.exam).toEqual(this.data.previews);
-            expect($scope.idProva).toEqual(this.data.idProva.idProvaInstanciada);
+            $scope.store_local_data(this.data);
+            expect(document.getElementById).toHaveBeenCalled();
             expect(localStorage.setItem).toHaveBeenCalled();
         });
         
         // Caso de teste que cobre classe (2)
-        it('should assign current-question correctly', function() { 
-            this.data.previews = ['m','o','c','k'];
+        it('should store exam-id correctly', function() { 
             this.data.idProva.idProvaInstanciada = 1;
-            this.data['current-question'] = '2';
             
-            $scope.configExam(this.data);
+            $scope.store_local_data(this.data);
             
-            expect($scope.currentQuestion).toEqual(parseInt(this.data['current-question']));
-            expect(localStorage.setItem).not.toHaveBeenCalled();
+            expect(document.getElementById).toHaveBeenCalled();
+            expect(localStorage.setItem).toHaveBeenCalled();
         });
         
-         // Caso de teste que cobre classe (3)
-        it('should assign correct data to $scope variables', function() { 
-            this.data.mockFullData();
+        // Caso de teste que cobre classe (3)
+        it('should not perform action due to undefined data input', function() { 
+            this.data = undefined;
             
-            $scope.configExam(this.data);
+            $scope.store_local_data(this.data);
             
-            expect($scope.answers).toEqual(this.data.answers);
             expect(localStorage.setItem).not.toHaveBeenCalled();
         });
         
         // Caso de teste que cobre classe (4)
-        it('should not perform action due to undefined data input', function() { 
-            this.data = undefined;
-            
-            $scope.configExam(this.data);
-            
-            expect($scope.exam).not.toBeDefined();
-            expect(localStorage.setItem).not.toHaveBeenCalled();
-        });
-        
-        // Caso de teste que cobre classe (5)
         it('should not perform action due to invalid data input format', function() { 
             this.data = ['myData'];
             
-            $scope.configExam(this.data);
+            $scope.store_local_data(this.data);
             
-            expect($scope.exam).not.toBeDefined();
+            expect(localStorage.setItem).not.toHaveBeenCalled();
+        });
+        
+        // Caso de teste que cobre classe (4)
+        it('should identify lack of support to localStorage', function() { 
+            this.data.mockFullData();
+            window.Storage = undefined;
+            
+            $scope.store_local_data(this.data);
+            
             expect(localStorage.setItem).not.toHaveBeenCalled();
         });
         
