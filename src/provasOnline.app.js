@@ -6,18 +6,28 @@ var app = angular.module('provasOnline', []);
 
 app.controller('provaCtrl', function($scope, $http, $interval, $timeout) {
 
-    $scope.store_local_data = function (data) {
-            if(!data || !data['idProva'] || typeof Storage == 'undefined') {
+    $scope.requestExam = function() {
+        if($scope.matricula == ''|| $scope.idEvento == '' || $scope.requestUrl == '') {
+            $("body").addClass("notLoaded");
+            return;
+        }
+        /* REQUEST EXAM */
+        $http.get($scope.requestUrl + '&idEvento=' + $scope.idEvento + '&matricula=' + $scope.matricula + "&larguradapagina=203").then(function (response) {
+            console.log(response.data);
+            if(!(typeof response.data == 'object') || response.data['idProva'] === undefined) {
                 $("body").addClass("notLoaded");
-                return false;
+            } else {
+                $scope.exam = response.data;
+                $scope.store_local_data(response.data);
+                $scope.configExam(response.data);
+                $scope.configClock();
+                $scope.loadQuestion($scope.currentQuestion);
+                if( $("body").hasClass("notLoaded") )
+                    $("body").removeClass("no7tLoaded");
+                $("body").removeClass("loading");
             }
-        
-            var store = data;
-            store['start-time'] = new Date().toISOString();
-            store['duration'] = document.getElementById("examDuration").value;
-            store['current-question'] = '0';
-            store['exam-id'] = data['idProva']['idProvaInstanciada'];
-            var stringStorage = JSON.stringify(store);
-            localStorage.setItem("exam-" + $scope.idEvento, stringStorage);
-        };
+        }, function (error) {
+            $("body").addClass("notLoaded");
+        });    
+    };
 });
