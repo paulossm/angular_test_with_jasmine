@@ -5,15 +5,15 @@
 var app = angular.module('provasOnline', []);
 
 app.controller('provaCtrl', function($scope, $http, $interval, $timeout) {
-     var exam = {};
+    $scope.exam = {};
     
     $scope.navigate = function (questionNumber) {
         if (questionNumber == undefined || questionNumber >= $scope.exam.length || questionNumber < 0) {
             return;
         } else {
             $scope.currentQuestion = questionNumber;
-            exam['current-question'] = $scope.currentQuestion;
-            localStorage.setItem("exam-" + $scope.idEvento, JSON.stringify(exam));
+            $scope.exam['current-question'] = $scope.currentQuestion;
+            localStorage.setItem("exam-" + $scope.idEvento, JSON.stringify($scope.exam));
             $scope.loadQuestion($scope.currentQuestion);
         }
     };
@@ -23,8 +23,8 @@ app.controller('provaCtrl', function($scope, $http, $interval, $timeout) {
         // $scope.saveAnswer();
         if ($scope.currentQuestion + 1 < $scope.exam.length) {
             ++$scope.currentQuestion;
-            exam['current-question'] = $scope.currentQuestion;
-            localStorage.setItem("exam-" + $scope.idEvento, JSON.stringify(exam));
+            $scope.exam['current-question'] = $scope.currentQuestion;
+            localStorage.setItem("exam-" + $scope.idEvento, JSON.stringify($scope.exam));
             $scope.loadQuestion($scope.currentQuestion);
         } else {
             $scope.finishExam();
@@ -36,8 +36,8 @@ app.controller('provaCtrl', function($scope, $http, $interval, $timeout) {
         // $scope.saveAnswer();
         if ($scope.currentQuestion > 0) {
             --$scope.currentQuestion;
-            exam['current-question'] = $scope.currentQuestion;
-            localStorage.setItem("exam-" + $scope.idEvento, JSON.stringify(exam));
+            $scope.exam['current-question'] = $scope.currentQuestion;
+            localStorage.setItem("exam-" + $scope.idEvento, JSON.stringify($scope.exam));
             $scope.loadQuestion($scope.currentQuestion);
         }
     };
@@ -94,7 +94,7 @@ app.controller('provaCtrl', function($scope, $http, $interval, $timeout) {
             var now = startTime;
         } else {
             now = new Date();
-            exam['start-time'] = now.toISOString();   
+            $scope.exam['start-time'] = now.toISOString();   
         }
         
         var regex = /^(([0-9]|0[0-9]|1[0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9])$)+/;
@@ -104,7 +104,7 @@ app.controller('provaCtrl', function($scope, $http, $interval, $timeout) {
             duration = document.getElementById("examDuration").value;
             if(regex.test(duration)) {
                 $scope.exam.duration = duration;
-                exam['duration'] = $scope.exam.duration;    
+                $scope.exam['duration'] = $scope.exam.duration;    
             } else {
                 return;
             }
@@ -147,10 +147,10 @@ app.controller('provaCtrl', function($scope, $http, $interval, $timeout) {
             $scope.time.minutes.left = Math.floor(totalInSeconds / 60);
             $scope.time.seconds.left = totalInSeconds - ($scope.time.minutes.left * 60);
 
-            exam['time-left'] = $scope.time;
+            $scope.exam['time-left'] = $scope.time;
         }
         
-        localStorage.setItem("exam-" + $scope.idEvento, JSON.stringify(exam));
+        localStorage.setItem("exam-" + $scope.idEvento, JSON.stringify($scope.exam));
     };
     
     $scope.countDown = function () {
@@ -159,16 +159,16 @@ app.controller('provaCtrl', function($scope, $http, $interval, $timeout) {
                 $scope.time.hours.left--;
                 $scope.time.minutes.left = 59;
                 $scope.time.seconds.left = 59;
-                exam['time-left'] = $scope.time;
-                localStorage.setItem("exam-" + $scope.idEvento, JSON.stringify(exam));
+                $scope.exam['time-left'] = $scope.time;
+                localStorage.setItem("exam-" + $scope.idEvento, JSON.stringify($scope.exam));
                 return;
             } else {
                 // tempo esgotado - finalizar prova
                 $scope.timeIsOver = true;
                 $scope.time.seconds.left = 0;
                 $scope.clockTicking = $interval.cancel($scope.clockTicking);
-                exam['time-left'] = $scope.time;
-                localStorage.setItem("exam-" + $scope.idEvento, JSON.stringify(exam))
+                $scope.exam['time-left'] = $scope.time;
+                localStorage.setItem("exam-" + $scope.idEvento, JSON.stringify($scope.exam))
                 $scope.confirmSubmit();
                 return;
             }
@@ -177,14 +177,14 @@ app.controller('provaCtrl', function($scope, $http, $interval, $timeout) {
             if ($scope.time.minutes.left > 0) {
                 $scope.time.minutes.left--;
                 $scope.time.seconds.left = 59;
-                exam['time-left'] = $scope.time;
-                localStorage.setItem("exam-" + $scope.idEvento, JSON.stringify(exam))
+                $scope.exam['time-left'] = $scope.time;
+                localStorage.setItem("exam-" + $scope.idEvento, JSON.stringify($scope.exam))
             }
             return;
         }
         $scope.time.seconds.left--;
-        exam['time-left'] = $scope.time;
-        localStorage.setItem("exam-" + $scope.idEvento, JSON.stringify(exam))
+        $scope.exam['time-left'] = $scope.time;
+        localStorage.setItem("exam-" + $scope.idEvento, JSON.stringify($scope.exam))
     };
     
     $scope.configExam = function (data) {
@@ -227,7 +227,7 @@ app.controller('provaCtrl', function($scope, $http, $interval, $timeout) {
         return $scope.answers[questionNumber].answer != undefined;
     };
     
-     $scope.store_local_data = function (data) {
+    $scope.store_local_data = function (data) {
         if(!data || !data['idProva'] || typeof Storage == 'undefined') {
             $("body").addClass("notLoaded");
             return false;
@@ -241,4 +241,31 @@ app.controller('provaCtrl', function($scope, $http, $interval, $timeout) {
         var stringStorage = JSON.stringify(store);
         localStorage.setItem("exam-" + $scope.idEvento, stringStorage);
     };
+    
+    $scope.requestExam = function() {
+        if($scope.matricula == ''|| $scope.idEvento == '' || $scope.requestUrl == '') {
+            $("body").addClass("notLoaded");
+            return;
+        }
+        /* REQUEST EXAM */
+        $http.get($scope.requestUrl + '&idEvento=' + $scope.idEvento + '&matricula=' + $scope.matricula + "&larguradapagina=203").then(function (response) {
+            console.log(response.data);
+            if(!(typeof response.data == 'object') || response.data['idProva'] === undefined) {
+                $("body").addClass("notLoaded");
+            } else {
+                $scope.exam = response.data;
+                $scope.store_local_data(response.data);
+                $scope.configExam(response.data);
+                $scope.configClock();
+                $scope.loadQuestion($scope.currentQuestion);
+                if( $("body").hasClass("notLoaded") )
+                    $("body").removeClass("no7tLoaded");
+                $("body").removeClass("loading");
+            }
+        }, function (error) {
+            $("body").addClass("notLoaded");
+        });    
+    };
+    
+    
 });
