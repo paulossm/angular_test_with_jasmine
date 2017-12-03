@@ -222,4 +222,8 @@ app.controller('provaCtrl', function($scope, $http, $interval, $timeout) {
         }
         $scope.letter = String.fromCharCode(97);
     };
+    
+    $scope.isAnswered = function (questionNumber) {
+        return $scope.answers[questionNumber].answer != undefined;
+    };
 });
