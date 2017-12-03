@@ -57,20 +57,28 @@ describe('MultiprovaTest', function() {
             $scope = $rootScope.$new();
             controller = $controller('provaCtrl', { $scope: $scope }); 
             
-            //spy para notoficar a chamada
+            //spy para notificar a chamada
             $scope.store_local_data = jasmine.createSpy("$scope.store_local_data");
             $scope.configExam = jasmine.createSpy("$scope.configExam");
             $scope.configClock = jasmine.createSpy("$scope.configClock");
             $scope.loadQuestion = jasmine.createSpy("$scope.loadQuestion");
             $scope.requestExam = jasmine.createSpy('$scope.requestExam');
 
+            //Mocks necessário para a execussão
+            document.getElementById = jasmine.createSpy("DOM").and.returnValue({value: "01:01:01"});
+            localStorage.setItem = jasmine.createSpy("setItem");
+
         });
         
         
         it('should call store_local_data', function(){
+            var Storage = {};
             this.data.mockFullData();
             $scope.store_local_data(this.data);
             
+            expect(document.getElementById).toHaveBeenCalled();
+            expect(localStorage.setItem).toHaveBeenCalled();
+
             expect($scope.store_local_data).toHaveBeenCalled();
         });
 
