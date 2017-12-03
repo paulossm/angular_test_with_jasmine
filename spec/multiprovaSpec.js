@@ -14,30 +14,68 @@ describe('MultiprovaTest', function() {
       $rootScope = _$rootScope_;
     }));
 
-    // Suíte de testes
-    describe("$scope.navigate", function() {
-		
-        // Caso de teste
-		it('should set the correct question to $scope', function() {
-          
-          var $scope = $rootScope.$new();
-          var controller = $controller('provaCtrl', { $scope: $scope });
-          
-          $scope.exam = ['test'];
-          var question = 0;
-          $scope.navigate(question);
-          expect($scope.currentQuestion).toEqual(0);
+    describe("the $scope.navigate function", function() {
+        
+        /*
+            A função $scope.navigate deve alterar o estado do objeto $scope.currentQuestion em relação à questão a qual o aluno está visualizando.
+            Requisitos (Definição de classes de equivalência): 
+                Válidos:
+                    - A entrada deve ser um número inteiro positivo entre 0 e (n-1) sendo 'n' o número de questões da prova atual. [1]
+                Inválidos:
+                    - A entrada está fora do intervalo de questões [2]
+                    - A entrada é um valor undefined [3]
+        */
+        
+        var $scope, controller;
+      
+        beforeEach(function() {
+            $scope = $rootScope.$new();
+            controller = $controller('provaCtrl', { $scope: $scope }); 
+            
+            /* Mock objetos $scope.exam e $scope.currentQuestion que é consultado durante a execução do caso de teste */
+            $scope.exam = {
+                length: '',
+            };
+            $scope.currentQuestion = 0;
+            /* Mocks de funções que são chamadas durante a execução do caso de teste */
+            $scope.loadQuestion = jasmine.createSpy('loadQuestion');
+            localStorage.setItem = jasmine.createSpy('setItem');
         });
       
-      it('should set the correct question to $scope', function() {
-          
-          var $scope = $rootScope.$new();
-          var controller = $controller('provaCtrl', { $scope: $scope });
-          
-          $scope.exam = ['test'];
-          var question = -1;
-          $scope.navigate(question);
-          expect($scope.currentQuestion).toEqual(-1);
+        // Caso de teste que cobre a classe (1)
+        it('should set the $scope.currentQuestion object to a valid value', function() {
+            /*
+                Como o intervalo de valores permitido é dinâmico, é preciso configurar o tamanho do array "$scope.exam" 
+                para ser consultado dentro da função e decidir se o valor de entrada é valido ou não.
+            */
+            $scope.exam.length = 10;
+            var question = 5;
+            $scope.navigate(question);
+            
+            expect($scope.currentQuestion).toEqual(5);
+            expect($scope.loadQuestion).toHaveBeenCalled();
+            expect(localStorage.setItem).toHaveBeenCalled();
+        });
+        
+        // Caso de teste que cobre a classe (2)
+        it('should not set the $scope.currentQuestion due to an invalid numeric input', function() {
+            $scope.exam.length = 3;
+            var question = 5;
+            $scope.navigate(question);
+            
+            expect($scope.currentQuestion).not.toEqual(5);
+            expect($scope.loadQuestion).not.toHaveBeenCalled();
+            expect(localStorage.setItem).not.toHaveBeenCalled();
+        });
+        
+        // Caso de teste que cobre a classe (3)
+        it('should not set the $scope.currentQuestion due to an undefined input', function() {
+            $scope.exam.length = 3;
+            var question = undefined;
+            $scope.navigate(question);
+            expect($scope.currentQuestion).not.toEqual(undefined);
+            expect($scope.loadQuestion).not.toHaveBeenCalled();
+            expect(localStorage.setItem).not.toHaveBeenCalled();
         });
 		
     });
