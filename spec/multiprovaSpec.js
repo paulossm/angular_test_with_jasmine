@@ -968,5 +968,90 @@ describe('MultiprovaTest', function() {
         })
     });
     
-    
+    describe("The integration test:", function() {        
+        /*
+            Essa função realizara a integração usando a abordagem bottonUp.
+                                            -----------------
+                                            - requestExam() -
+                                            -----------------
+                                                    -
+                                                    -
+                    ---------------------------------------------------------------
+                    -                      -                  -                   -
+                    -                      -                  -                   -
+                    -                      -                  -                   -
+                    -                      -                  -                   -
+            ----------------------  ----------------  -----------------  ------------------
+            - store_local_data() -  - configExam() -  - configClock() -  - loadQuestion() -
+            ----------------------  ----------------  -----------------  ------------------
+        */        
+        
+        var $scope, controller;
+      
+        beforeEach(function() {
+            /* Mock objetos consultados durante a execução do caso de teste */
+            this.data = {
+                previews: [],
+                idProva: {idProvaInstanciada: ''},
+                'current-question': '',
+                answers: [],
+                
+                mockFullData: function() {
+                    this.previews = ['m','o','c','k'];
+                    this.idProva.idProvaInstanciada = 1;
+                    this['current-question'] = 1;
+                    this.answers = ['a','b', 'c', 'd'];
+                }
+            };
+            
+            $scope = $rootScope.$new();
+            controller = $controller('provaCtrl', { $scope: $scope }); 
+            $scope.exam = {};
+            
+            //Mocks necessário para a execussão
+            localStorage.setItem = jasmine.createSpy("setItem");
+            document.getElementById = jasmine.createSpy("DOM").and.returnValue({value: "01:01:01"});
+        });
+        
+        
+        it('should call store_local_data', function() {
+            window.Storage = {};
+            this.data.mockFullData();
+            $scope.store_local_data(this.data);
+            
+            expect(document.getElementById).toHaveBeenCalled();
+            expect(localStorage.setItem).toHaveBeenCalled();
+        });
+
+        it('should call configExam', function(){
+            this.data.mockFullData();
+            $scope.configExam(this.data);
+
+            expect($scope.exam).toEqual(this.data.previews);
+            expect($scope.idProva).toEqual(this.data.idProva.idProvaInstanciada);
+            expect(localStorage.setItem).not.toHaveBeenCalled();
+        });
+
+        it('should call configClock', function(){
+            document.getElementById = jasmine.createSpy("DOM").and.returnValue({value: "01:01:01"});
+            var startTime = undefined;
+            var duration = undefined;
+            var timeLeft = undefined;
+            
+            $scope.configClock(startTime, duration, timeLeft);
+            
+            expect($scope.exam.duration).toEqual("01:01:01");
+            expect($scope.examTime.startTime.getTime()).toBeDefined();
+            expect($scope.examTime.endTime).toBeGreaterThan($scope.examTime.startTime);
+            expect($scope.time.hours.left).toEqual(parseInt("01"));
+            expect($scope.time.minutes.left).toEqual(parseInt("01"));
+            expect($scope.time.seconds.left).toEqual(parseInt("01"));
+            
+            expect(document.getElementById).toHaveBeenCalled();
+            expect(localStorage.setItem).toHaveBeenCalled();
+            
+        });
+
+
+    });
 })

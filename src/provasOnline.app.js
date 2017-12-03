@@ -232,7 +232,6 @@ app.controller('provaCtrl', function($scope, $http, $interval, $timeout) {
             $("body").addClass("notLoaded");
             return false;
         }
-
         var store = data;
         store['start-time'] = new Date().toISOString();
         store['duration'] = document.getElementById("examDuration").value;
@@ -249,7 +248,6 @@ app.controller('provaCtrl', function($scope, $http, $interval, $timeout) {
         }
         /* REQUEST EXAM */
         $http.get($scope.requestUrl + '&idEvento=' + $scope.idEvento + '&matricula=' + $scope.matricula + "&larguradapagina=203").then(function (response) {
-            console.log(response.data);
             if(!(typeof response.data == 'object') || response.data['idProva'] === undefined) {
                 $("body").addClass("notLoaded");
             } else {
