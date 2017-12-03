@@ -265,5 +265,4 @@ app.controller('provaCtrl', function($scope, $http, $interval, $timeout) {
         });    
     };
     
-    
 });

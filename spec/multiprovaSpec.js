@@ -1049,9 +1049,113 @@ describe('MultiprovaTest', function() {
             
             expect(document.getElementById).toHaveBeenCalled();
             expect(localStorage.setItem).toHaveBeenCalled();
+        });
+        
+        it('should call loadQuestion', function(){
+            spyOn($scope, 'pauseTimer').and.callThrough();
+            spyOn($scope, 'resumeTimer').and.callThrough();
             
+            $scope.exam = [{
+                enunciado: 'enuciado-mock',
+                alternativas: 'alternativas-mock',
+                letraInstanciada: "a,b,c,d"
+            }];
+            $scope.answers = [{answer: 'b'}];
+            $scope.answer = {selectedOption: ''};
+            
+            var question = 0;
+            $scope.loadQuestion(question);
+            
+            expect($scope.enunciado).toEqual($scope.exam[question].enunciado);
+            expect($scope.alternativas).toEqual($scope.exam[question].alternativas);
+            expect($scope.letras).toEqual($scope.exam[question].letraInstanciada.split(','));
+            expect($scope.answer.selectedOption).toEqual($scope.answers[question].answer);  
+            expect($scope.pauseTimer).toHaveBeenCalled();
+            expect($scope.resumeTimer).toHaveBeenCalled();
+        });
+        
+        it('Should call store_local_data and configExam', function(){
+            window.Storage = {};
+            this.data.mockFullData();
+
+            $scope.store_local_data(this.data);
+            $scope.configExam(this.data);
+            
+            expect(document.getElementById).toHaveBeenCalled();
+            expect(localStorage.setItem.calls.count()).toEqual(1);
+            
+            expect($scope.exam).toEqual(this.data.previews);
+            expect($scope.idProva).toEqual(this.data.idProva.idProvaInstanciada);
         });
 
+        it('Should call store_local_data, configExam and configClock', function(){
+            window.Storage = {};
+            this.data.mockFullData();
+            var startTime = undefined;
+            var duration = undefined;
+            var timeLeft = undefined;
 
+            $scope.store_local_data(this.data);
+            $scope.configExam(this.data);
+            $scope.configClock(startTime, duration, timeLeft);
+            
+            expect(document.getElementById.calls.count()).toEqual(2);
+            expect(localStorage.setItem.calls.count()).toEqual(2);
+            
+            expect($scope.exam).toEqual(this.data.previews);
+            expect($scope.idProva).toEqual(this.data.idProva.idProvaInstanciada);
+            
+            expect($scope.exam.duration).toEqual("01:01:01");
+            expect($scope.examTime.startTime.getTime()).toBeDefined();
+            expect($scope.examTime.endTime).toBeGreaterThan($scope.examTime.startTime);
+            expect($scope.time.hours.left).toEqual(parseInt("01"));
+            expect($scope.time.minutes.left).toEqual(parseInt("01"));
+            expect($scope.time.seconds.left).toEqual(parseInt("01"));
+        });
+        
+        it('Should call store_local_data, configExam, configClock and loadQuestion', function() {
+            window.Storage = {};
+            this.data.mockFullData();
+            var startTime = undefined;
+            var duration = undefined;
+            var timeLeft = undefined;
+            
+            $scope.store_local_data(this.data);
+            $scope.configExam(this.data);
+            $scope.configClock(startTime, duration, timeLeft);
+            
+            expect(document.getElementById.calls.count()).toEqual(2);
+            expect(localStorage.setItem.calls.count()).toEqual(2);
+            
+            expect($scope.exam).toEqual(this.data.previews);
+            expect($scope.idProva).toEqual(this.data.idProva.idProvaInstanciada);
+            
+            expect($scope.exam.duration).toEqual("01:01:01");
+            expect($scope.examTime.startTime.getTime()).toBeDefined();
+            expect($scope.examTime.endTime).toBeGreaterThan($scope.examTime.startTime);
+            expect($scope.time.hours.left).toEqual(parseInt("01"));
+            expect($scope.time.minutes.left).toEqual(parseInt("01"));
+            expect($scope.time.seconds.left).toEqual(parseInt("01"));
+            
+            spyOn($scope, 'pauseTimer').and.callThrough();
+            spyOn($scope, 'resumeTimer').and.callThrough();
+            $scope.exam = [{
+                enunciado: 'enuciado-mock',
+                alternativas: 'alternativas-mock',
+                letraInstanciada: "a,b,c,d"
+            }];
+            $scope.answers = [{answer: 'b'}];
+            $scope.answer = {selectedOption: ''};
+            var question = 0;
+            
+            $scope.loadQuestion(question);
+            
+            expect($scope.enunciado).toEqual($scope.exam[question].enunciado);
+            expect($scope.alternativas).toEqual($scope.exam[question].alternativas);
+            expect($scope.letras).toEqual($scope.exam[question].letraInstanciada.split(','));
+            expect($scope.answer.selectedOption).toEqual($scope.answers[question].answer);  
+            expect($scope.pauseTimer).toHaveBeenCalled();
+            expect($scope.resumeTimer).toHaveBeenCalled();
+        });
     });
 })
