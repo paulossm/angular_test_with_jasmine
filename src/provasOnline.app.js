@@ -17,4 +17,17 @@ app.controller('provaCtrl', function($scope, $http, $interval, $timeout) {
             $scope.loadQuestion($scope.currentQuestion);
         }
     };
+    
+    $scope.nextQuestion = function () {
+        // Save answer for current question before loading the next one
+        // $scope.saveAnswer();
+        if ($scope.currentQuestion + 1 < $scope.exam.length) {
+            ++$scope.currentQuestion;
+            exam['current-question'] = $scope.currentQuestion;
+            localStorage.setItem("exam-" + $scope.idEvento, JSON.stringify(exam));
+            $scope.loadQuestion($scope.currentQuestion);
+        } else {
+            $scope.finishExam();
+        }
+    };
 });
